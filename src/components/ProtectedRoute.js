@@ -1,9 +1,22 @@
 import React from 'react'
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }) => {
-    let isAuth = localStorage.getItem("token")
+const ProtectedRoute = ({ children, requireAdmin = false }) => {
+    const location = useLocation();
+    const isAuth = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
-   return isAuth ? children : <Navigate to="/" />
+    // If not authenticated, redirect to login
+    if (!isAuth) {
+        return <Navigate to="/" replace />;
+    }
+
+    // If admin route is required but user is not admin, redirect to dashboard
+    if (requireAdmin && role !== "admin") {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
 }
+
 export default ProtectedRoute
