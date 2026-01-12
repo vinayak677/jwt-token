@@ -1,44 +1,64 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import dashboardStyles from "./dashboardStyles";
 
 const Dashboard = () => {
-   const[user,setUser] = React.useState(null);
+  const navigate = useNavigate();
+     const[user,setUser]=React.useState(null);
+ 
+     let payload={
+       headers:{
+         Authorization:`Bearer ${localStorage.getItem("token")}`
+       }
+     }
+ 
+  useEffect(() => {
+     let token=localStorage.getItem("token");
+     if(!token)return;
+   const fetchData = async () => {
+     try {
+       const resp = await fetch(
+         "https://api.escuelajs.co/api/v1/auth/profile",
+         payload
+       );
+       const data = await resp.json();
+       setUser(data);
+       localStorage.setItem("role", data.role);
+       console.log(data, "from context");
+     } catch (error) {
+       console.error(error);
+     }
+   };
+ 
+     fetchData();
+ }, []);
 
-   let token = localStorage.getItem("token");
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    navigate("/");
+  };
 
-   let header={
-    headers:{
-        Authorization:`Bearer ${token}`
-    }
-   }
-
-    React.useEffect(()=>{
-        const fetchData = async()=>{
-            let res = await fetch("https://api.escuelajs.co/api/v1/auth/profile",header);
-            let data = await res.json();
-            setUser(data);
-            console.log(data);
-        }
-        fetchData();
-    },[])
-   
-    const navigate = useNavigate()
-    const logout=()=>{
-        localStorage.removeItem("token");
-        navigate("/")
-    }
   return (
-    <div>
-      <h1>hello, you logged in successfully</h1>
-        {user && (
-            <div>
-                <p>{user.name || "Name not available"}</p>
-                <p>{user.email || "Email not available"}</p>
-            </div>
-        )}
-      <button onClick={logout}>Logout</button>
-    </div>
-  )
-}
+    <div style={dashboardStyles.container}>
+      <div style={dashboardStyles.card}>
+        <h1 style={dashboardStyles.heading}>
+          Hello, <strong style={{color:"red"}}>{user?.role?.toUpperCase()}</strong> logged in successfully 🎉 
+        </h1>
 
-export default Dashboard
+        {user && (
+          <div style={dashboardStyles.userInfo}>
+            <p><strong>Name:</strong> {user?.name || "N/A"}</p>
+            <p><strong>Email:</strong> {user?.email || "N/A"}</p>
+          </div>
+        )}
+
+        <button style={dashboardStyles.button} onClick={logout}>
+          Logout
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
